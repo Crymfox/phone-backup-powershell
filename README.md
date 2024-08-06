@@ -49,6 +49,9 @@ This PowerShell script automates the process of copying photos from a connected 
 4. **Verify Backup:**
    Check the destination directory (e.g., `D:\BACKUP\TELEFON_DCIM_ALL`) to verify that the photos have been copied and organized by year and month.
 
+## License
+   This project is licensed under the MIT License - see the [LICENSE](https://opensource.org/license/mit) file for details.
+
 ## Acknowledgements
 - [PowerShell Documentation](https://docs.microsoft.com/en-us/powershell/)
 - Community contributions and feedback
