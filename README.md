@@ -1,33 +1,23 @@
-# Phone Photo Backup Script
+# Phone to Backup Directory Sync Script
 
 ## Overview
 
-This PowerShell script automates the process of copying photos from a connected phone to a backup directory on your computer. The photos are organized by year and month based on their last modified date. The script efficiently handles large numbers of files and avoids re-copying existing files to save time and resources.
+This PowerShell script automates the process of copying photos from your phone's `DCIM/Camera` directory to a backup directory on your computer. The script organizes the photos by year and month based on the last modified date. It is designed to handle large numbers of files and folders and includes optimizations for managing the loading of files via MTP (Media Transfer Protocol).
 
 ## Features
 
-- **Automatic Directory Creation:** Automatically creates directories for each year and month if they do not exist.
-- **Efficient File Copying:** Uses an index to avoid copying files that already exist in the destination directory, improving performance for large backups.
-- **Recursive Folder Handling:** Copies files from nested directories on the phone.
-- **Error Handling:** Provides informative error messages if the phone is not connected or directories are not found.
+- **File Synchronization**: Copies only new or modified files from your phone to the backup directory.
+- **Organized Storage**: Automatically organizes photos into folders by year and month.
+- **Efficient Indexing**: Utilizes an index of existing files to avoid duplicate copies.
+- **Iterative Directory Traversal**: Uses an iterative approach to process directories, avoiding the pitfalls of recursion with large file sets.
+- **MTP Buffering**: The script attempts to optimize the loading of files over MTP by buffering a specified number of files during the transfer process.
 
 ## Prerequisites
 
-- A Windows computer with PowerShell installed.
-- Your phone connected to the computer and recognized in "This PC" (Windows Explorer).
-- Ensure the phone's file transfer mode is enabled (usually MTP mode).
-
-## Script Details
-
-### Functions
-
-- `Create-Dir($path)`: Creates a directory if it does not exist.
-- `Get-SubFolder($parentDir, $subPath)`: Retrieves a subfolder within the parent directory.
-- `Get-PhoneMainDir($phoneName)`: Finds the root directory of the phone in "This PC".
-- `Get-FullPathOfMtpDir($mtpDir)`: Constructs the full path of an MTP directory.
-- `Get-ExistingFilesIndex($destDirPath)`: Creates an index of existing files in the destination directory.
-- `Check-IfItemExists($existingFilesIndex, $itemName)`: Checks if a file exists in the destination directory using the index.
-- `Copy-FromPhoneSource-ToBackup($sourceMtpDir, $destDirPath, $existingFilesIndex)`: Copies files from the phone to the backup directory, utilizing the index to skip existing files.
+- PowerShell 5.0 or higher
+- A Windows PC with MTP support
+- A USB connection between your phone and PC
+- Enable developer mode on your phone and ensure USB debugging is active.
 
 ## Usage
 
@@ -35,7 +25,7 @@ This PowerShell script automates the process of copying photos from a connected 
    Clone the repository or download the script file to your local machine.
 
    ```sh
-   git clone https://github.com/yourusername/phone-photo-backup.git
+   git clone https://github.com/yourusername/phone-backup-powershell.git
 
 2. **Modify the Phone Name:**
    Update the `$phoneName` variable in the script to match the name of your phone as it appears in "This PC".
@@ -48,6 +38,15 @@ This PowerShell script automates the process of copying photos from a connected 
 
 4. **Verify Backup:**
    Check the destination directory (e.g., `D:\BACKUP\TELEFON_DCIM_ALL`) to verify that the photos have been copied and organized by year and month.
+
+5. **Important Notes:**
+   - *MTP Loading:* The script attempts to optimize the loading of files from the phone over MTP. If your phone has a large number of files, it may take some time for all files to become accessible.
+   - *USB Mass Storage:* If available, consider switching to USB Mass Storage mode for faster access to files.
+
+## Troubleshooting
+
+- **Files Not Copying:** If the script doesn't copy all files, ensure that MTP has fully loaded the directory contents before running the script. Alternatively, open the folder in File Explorer to prompt MTP to load files faster.
+- **File Not Found Errors:** If specific files aren't found, it may be due to MTP not loading them in time. Ensure that your phone is fully connected and that all files are visible in File Explorer.
 
 ## License
    This project is licensed under the MIT License - see the [LICENSE](https://opensource.org/license/mit) file for details.
