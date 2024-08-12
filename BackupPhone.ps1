@@ -1,5 +1,5 @@
 $ErrorActionPreference = [string]"Stop"
-$DestDirForPhotos = [string]"D:\BACKUP\TELEFON_DCIM_ALL"
+$DestDirForPhotos = [string]"D:\BACKUP\TELEFON_DCIM_NEW"
 $Summary = [Hashtable]@{NewFilesCount=0; ExistingFilesCount=0}
 
 function Create-Dir($path) {
@@ -77,39 +77,80 @@ function Check-IfItemExists($existingFilesIndex, $itemName) {
     return $existingFilesIndex.ContainsKey($itemName)
 }
 
+# New function to buffer the files before copying
+function Get-MtpFilesBuffered {
+    param (
+        [Parameter(Mandatory=$true)]
+        [Object]$sourceMtpDir
+    )
+    $files = @()
+    $retryCount = 5
+    while ($retryCount -gt 0) {
+        try {
+            $items = $sourceMtpDir.GetFolder.Items()
+            if ($items.Count -gt 0) {
+                $files += $items | Where-Object { -not $_.IsFolder }
+                if ($files.Count -gt 0) {
+                    break
+                }
+            }
+        } catch {
+            Write-Host "Error retrieving files, retrying..."
+        }
+        Start-Sleep -Seconds 5
+        $retryCount--
+    }
+    if ($files.Count -eq 0) {
+        throw "Failed to retrieve files after multiple attempts."
+    }
+    return $files
+}
+
 function Copy-FromPhoneSource-ToBackup($sourceMtpDir, $destDirPath, $existingFilesIndex) {
     Create-Dir $destDirPath
     $destDirShell = (New-Object -Com Shell.Application).NameSpace($destDirPath)
-    $fullSourceDirPath = Get-FullPathOfMtpDir $sourceMtpDir
 
-    Write-Host "Copying from: '$fullSourceDirPath' to '$destDirPath'"
+    $directoriesStack = New-Object System.Collections.Stack
+    $directoriesStack.Push(@($sourceMtpDir, $destDirPath))
 
-    $copiedCount = 0
-    $existingCount = 0
+    while ($directoriesStack.count -gt 0) {
+        $currentSourceDestPair = $directoriesStack.Pop()
+        $currentSourceDir = $currentSourceDestPair[0]
+        $currentDestDir = $currentSourceDestPair[1]
 
-    foreach ($item in $sourceMtpDir.GetFolder.Items()) {
-        $itemName = $item.Name
-        $fullFilePath = Join-Path -Path $destDirPath -ChildPath $itemName
+        $fullSourceDirPath = Get-FullPathOfMtpDir $currentSourceDir
+        Write-Host "Processing directory: '$fullSourceDirPath'"
 
-        if ($item.IsFolder) {
-            Write-Host "$itemName is a folder, stepping into"
-            Copy-FromPhoneSource-ToBackup $item (Join-Path $destDirPath $item.GetFolder.Title) $existingFilesIndex
-        } elseif (Check-IfItemExists $existingFilesIndex $itemName) {
-            Write-Host "Element '$itemName' already exists"
-            $existingCount++
-        } else {
-            $copiedCount++
-            Write-Host ("Copying #{0}: {1}{2}" -f $copiedCount, $fullSourceDirPath, $item.Name)
-            $destDirShell.CopyHere($item)
+        # Use buffered file retrieval
+        $files = Get-MtpFilesBuffered -sourceMtpDir $currentSourceDir
+
+        foreach ($item in $files) {
+            $itemName = $item.Name
+            $fullFilePath = Join-Path -Path $currentDestDir -ChildPath $itemName
+
+            if (Check-IfItemExists $existingFilesIndex $itemName) {
+                Write-Host "Element '$itemName' already exists"
+                $script:Summary.ExistingFilesCount++
+            } else {
+                Write-Host ("Copying {0}: {1}" -f $itemName, $fullSourceDirPath)
+                $destDirShell.CopyHere($item)
+                $script:Summary.NewFilesCount++
+            }
+        }
+
+        # Handle folders last to ensure all files are copied before stepping into subdirectories
+        foreach ($item in $currentSourceDir.GetFolder.Items()) {
+            if ($item.IsFolder) {
+                $subDestDir = Join-Path $currentDestDir $item.GetFolder.Title
+                Create-Dir $subDestDir
+                $directoriesStack.Push(@($item, $subDestDir))
+            }
         }
     }
-
-    $script:Summary.NewFilesCount += $copiedCount
-    $script:Summary.ExistingFilesCount += $existingCount
-    Write-Host "Copied '$copiedCount' elements from '$fullSourceDirPath'"
+    Write-Host "Completed copying files from '$destDirPath'. New files: $($script:Summary.NewFilesCount), Existing files: $($script:Summary.ExistingFilesCount)"
 }
 
-$phoneName = "Galaxy J5 Pro" # Phone name as it appears in This PC
+$phoneName = "OPPO A73" # Phone name as it appears in This PC
 $phoneRootDir = Get-PhoneMainDir $phoneName
 
 # Create the index of existing files
@@ -128,16 +169,16 @@ if ($existingFilesIndex.Count -eq 0) {
 }
 
 # Start the copy process using the index
-Copy-FromPhoneSource-ToBackup (Get-SubFolder $phoneRootDir "Phone\DCIM\Camera") $DestDirForPhotos $existingFilesIndex
+Copy-FromPhoneSource-ToBackup (Get-SubFolder $phoneRootDir "Mémoire de stockage interne\DCIM\Camera") $DestDirForPhotos $existingFilesIndex
 
 # Get the files which should be moved, without folders
-$files = Get-ChildItem 'D:\BACKUP\TELEFON_DCIM_ALL' | Where-Object { -not $_.PSIsContainer }
+$files = Get-ChildItem 'D:\BACKUP\TELEFON_DCIM_NEW' | Where-Object { -not $_.PSIsContainer }
 
 # List Files which will be moved
 $files
 
 # Target Folder where files should be moved to. The script will automatically create a folder for the year and month.
-$targetPath = 'D:\BACKUP\TELEFON_DCIM_ALL'
+$targetPath = 'D:\BACKUP\TELEFON_DCIM_NEW'
 
 foreach ($file in $files) {
     # Get year and Month of the file
