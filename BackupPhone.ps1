@@ -1,6 +1,7 @@
 $ErrorActionPreference = [string]"Stop"
-$DestDirForPhotos = [string]"D:\BACKUP\TELEFON_DCIM_NEW"
+$DestDirForPhotos = [string]"C:\BACKUP\TELEFON_DCIM_NEW"
 $Summary = [Hashtable]@{NewFilesCount=0; ExistingFilesCount=0}
+$phoneName = "Galaxy J5 Pro" # Phone name as it appears in This PC
 
 function Create-Dir($path) {
     if (!(Test-Path -Path $path)) {
@@ -150,7 +151,6 @@ function Copy-FromPhoneSource-ToBackup($sourceMtpDir, $destDirPath, $existingFil
     Write-Host "Completed copying files from '$destDirPath'. New files: $($script:Summary.NewFilesCount), Existing files: $($script:Summary.ExistingFilesCount)"
 }
 
-$phoneName = "OPPO A73" # Phone name as it appears in This PC
 $phoneRootDir = Get-PhoneMainDir $phoneName
 
 # Create the index of existing files
@@ -169,16 +169,16 @@ if ($existingFilesIndex.Count -eq 0) {
 }
 
 # Start the copy process using the index
-Copy-FromPhoneSource-ToBackup (Get-SubFolder $phoneRootDir "Mémoire de stockage interne\DCIM\Camera") $DestDirForPhotos $existingFilesIndex
+Copy-FromPhoneSource-ToBackup (Get-SubFolder $phoneRootDir "Phone\DCIM\Camera") $DestDirForPhotos $existingFilesIndex
 
 # Get the files which should be moved, without folders
-$files = Get-ChildItem 'D:\BACKUP\TELEFON_DCIM_NEW' | Where-Object { -not $_.PSIsContainer }
+$files = Get-ChildItem $DestDirForPhotos | Where-Object { -not $_.PSIsContainer }
 
 # List Files which will be moved
 $files
 
 # Target Folder where files should be moved to. The script will automatically create a folder for the year and month.
-$targetPath = 'D:\BACKUP\TELEFON_DCIM_NEW'
+$targetPath = $DestDirForPhotos
 
 foreach ($file in $files) {
     # Get year and Month of the file
