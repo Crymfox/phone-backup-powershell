@@ -25,7 +25,8 @@ This PowerShell script automates the process of copying photos from your phone's
    Clone the repository or download the script file to your local machine.
 
    ```sh
-   git clone https://github.com/yourusername/phone-backup-powershell.git
+   git clone https://github.com/Crymfox/phone-backup-powershell.git
+   ```
 
 2. **Modify the Phone Name:**
    Update the `$phoneName` variable in the script to match the name of your phone as it appears in "This PC".
@@ -35,6 +36,7 @@ This PowerShell script automates the process of copying photos from your phone's
 
    ```powershell
    .\BackupPhone.ps1
+   ```
 
 4. **Verify Backup:**
    Check the destination directory (e.g., `D:\BACKUP\TELEFON_DCIM_ALL`) to verify that the photos have been copied and organized by year and month.
@@ -43,10 +45,38 @@ This PowerShell script automates the process of copying photos from your phone's
    - *MTP Loading:* The script attempts to optimize the loading of files from the phone over MTP. If your phone has a large number of files, it may take some time for all files to become accessible.
    - *USB Mass Storage:* If available, consider switching to USB Mass Storage mode for faster access to files.
 
+## Additional Script: BackupScriptAdb.ps1
+
+For users with a large number of files on their phone, the `BackupScriptAdb.ps1` script can be used to speed up future synchronizations by moving files directly on the phone after running the main backup script.
+
+### What It Does
+
+The `BackupScriptAdb.ps1` script automates the organization of photos on your phone by moving them into folders based on their last modified date. By doing this, the next time you run the main backup script, the sync process will be faster because the files are already organized.
+
+### Prerequisites for ADB Script
+
+- **ADB Installed:** Ensure you have ADB (Android Debug Bridge) installed on your computer. You can download it as part of the Android SDK Platform Tools [here](https://developer.android.com/studio/releases/platform-tools).
+- **Device Drivers:** Install the appropriate USB drivers for your device. This is crucial for ADB to recognize your phone.
+- **USB Debugging:** Ensure that USB Debugging is enabled on your phone. This option is usually found in the Developer Options menu on your device.
+
+### Usage
+
+1. **Run the Main Backup Script First:**
+   Before running the ADB script, make sure to run the main `BackupPhone.ps1` script to back up your photos to your PC.
+
+2. **Run the ADB Backup Script:**
+   After running the main script, you can run the ADB script to organize the files on your phone:
+   
+   ```powershell
+   .\BackupScriptAdb.ps1
+   ```
+
+3. **Verify Organization:**
+   The photos on your phone should now be organized into folders by year and month. This will make future backups more efficient.
+
 ## Troubleshooting
 
-- **Files Not Copying:** If the script doesn't copy all files, ensure that MTP has fully loaded the directory contents before running the script. Alternatively, open the folder in File Explorer to prompt MTP to load files faster.
-- **File Not Found Errors:** If specific files aren't found, it may be due to MTP not loading them in time. Ensure that your phone is fully connected and that all files are visible in File Explorer.
+- **ADB Issues:** If the ADB script doesn't run as expected, ensure that ADB is correctly installed and that your device is recognized by ADB (use `adb devices` to check).
 
 ## License
    This project is licensed under the MIT License - see the [LICENSE](https://opensource.org/license/mit) file for details.
